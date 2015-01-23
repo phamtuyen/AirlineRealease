@@ -1,0 +1,1 @@
+@javax.xml.bind.annotation.XmlSchema(namespace = "http://muadi.com.vn/", elementFormDefault = javax.xml.bind.annotation.XmlNsForm.QUALIFIED) package com.mbv.ticketsystem.airline.vnair.vniscsoapservice;

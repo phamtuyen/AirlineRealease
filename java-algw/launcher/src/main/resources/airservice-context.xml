@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xsi:schemaLocation="
+		http://www.springframework.org/schema/mvc 
+		http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-3.2.xsd
+		http://www.springframework.org/schema/rabbit 
+		http://www.springframework.org/schema/rabbit/spring-rabbit-1.1.xsd">
+
+     
+   	 <!-- <context:property-placeholder location="classpath:*/config.properties"/> -->
+     <context:property-placeholder location="classpath:config.properties"/>
+	
+    <import resource="rabbit-context.xml"/>
+
+  <import resource="aircommon-context.xml"/> 
+    
+    	
+
+    <bean id="AbstractWorkerFactory" class="com.mbv.ticketsystem.airline.AbstractWorkerFactory"
+          abstract="true">
+        <property name="farePriceCache" ref="AirFarePriceCache"/>
+        <property name="itineraryRepository" ref="AirItineraryRepository"/>
+    </bean>
+
+    <bean id="JetstarWorkerFactory" class="com.mbv.ticketsystem.airline.jetstar.JetstarWorkerFactory"
+          parent="AbstractWorkerFactory">
+        <property name="workerName" value="Jetstar"/>
+        <property name="numWorkers" value="10"/>
+        <property name="account">
+            <bean class="com.mbv.ticketsystem.airline.jetstar.JetstarAccount">
+                <property name="username" value="${bluser}"/>
+                <property name="password" value="${blpass}"/>                
+                <property name="loginViewState" value="${blloginviewstate}"/>
+                <property name="searchViewState" value="${blsearchviewstate}"/>
+            </bean>
+        </property>
+        
+        <property name="fareRules">
+            <list>
+                <bean class="com.mbv.ticketsystem.airline.rules.JetstarPaymentFeeRule"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="VietjetWorkerFactory" class="com.mbv.ticketsystem.airline.vietjet.VietjetWorkerFactory"
+          parent="AbstractWorkerFactory">
+        <property name="workerName" value="Vietjet"/>
+        <property name="numWorkers" value="10"/>
+        <property name="config">
+            <bean class="com.mbv.ticketsystem.airline.vietjet.VietjetConfig">
+                <property name="username" value="${vjuser}"/>
+                <property name="password" value="${vjpass}"/>              
+                <property name="loginViewState" value="${vjloginviewstate}"/>
+                <property name="searchViewState" value="${vjsearchviewstate}"/>
+            </bean>
+        </property>
+    </bean>
+
+
+    <!--<bean id="VnairWorkerFactory" class="com.mbv.ticketsystem.airline.vnair.VnairWorkerFactory" parent="AbstractWorkerFactory"> -->
+    <!--<property name="workerName" value="VietnamAirlines" /> -->
+    <!--<property name="numWorkers" value="10" /> -->
+    <!--<property name="config"> -->
+    <!--<bean class="com.mbv.ticketsystem.airline.vnair.VniscConfig"> -->
+    <!--<property name="agentCode" value="VFS" /> -->
+    <!--<property name="securityCode" value="s46o8sDGVe7a5Jvi/kfTyR4YgOdtzhDN" /> -->
+    <!--<property name="redirectPattern">-->
+    <!--<bean factory-method="compile" class="java.util.regex.Pattern">-->
+    <!--<constructor-arg value="vnisc_payment\?ID=([0-9]+)"/>-->
+    <!--</bean>					-->
+    <!--</property>-->
+    <!--</bean> -->
+    <!--</property> -->
+    <!--<property name="fareRules"> -->
+    <!--<list> -->
+    <!--<bean class="com.mbv.ticketsystem.airline.rules.AirportTaxRule" /> -->
+    <!--</list> -->
+    <!--</property> -->
+    <!--</bean>-->
+
+    <bean id="AirlineService" class="com.mbv.ticketsystem.airline.AirService"
+          init-method="start" destroy-method="stop">
+        <property name="masterProps">
+            <bean factory-method="create"
+                  class="com.mbv.ticketsystem.airline.AirServiceMasterPropsFactory">
+                <constructor-arg>
+                    <list>
+                        <ref bean="JetstarWorkerFactory"/>
+                        <ref bean="VietjetWorkerFactory"/>
+                        <!--<ref bean="VnairWorkerFactory"/> 						-->
+                    </list>
+                </constructor-arg>
+                <constructor-arg ref="rabbitTemplate"/>
+            </bean>
+        </property>
+    </bean>
+</beans>
