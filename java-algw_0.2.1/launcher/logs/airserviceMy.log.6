@@ -1,0 +1,31 @@
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Jetstar6]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Jetstar9]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Jetstar8]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Jetstar7]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Jetstar3]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Jetstar4]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Jetstar1]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Jetstar5]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Jetstar0]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Jetstar2]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Vietjet9]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Vietjet6]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Vietjet7]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Vietjet0]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Vietjet5]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Vietjet4]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Vietjet2]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Vietjet3]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Vietjet8]
+2015-01-31 23:00:11 INFO  AbstractAirWorker:81 - {} started Actor[akka://AirService/user/Master/Vietjet1]
+2015-01-31 23:00:33 INFO  AirlineController:109 - RabbitMQ send success search request: (Body:'{"originDestinationInfos":[{"departureDate":"2015-07-19T00:12:00+0700","originCode":"HAN","destinationCode":"SGN","vendor":"VN"}],"passengerInfos":[{"passengerType":"ADT","quantity":1},{"passengerType":"CHD","quantity":0},{"passengerType":"INF","quantity":0}]}'; ID:null; Content:application/json; Headers:{__TypeId__=com.mbv.ticketsystem.common.airline.UpdateFarePriceCommand}; Exchange:null; RoutingKey:null; Reply:null; DeliveryMode:PERSISTENT; DeliveryTag:0)
+2015-01-31 23:00:33 INFO  AirlineController:109 - RabbitMQ send success search request: (Body:'{"originDestinationInfos":[{"departureDate":"2015-07-19T00:12:00+0700","originCode":"HAN","destinationCode":"SGN","vendor":"BL"}],"passengerInfos":[{"passengerType":"ADT","quantity":1},{"passengerType":"CHD","quantity":0},{"passengerType":"INF","quantity":0}]}'; ID:null; Content:application/json; Headers:{__TypeId__=com.mbv.ticketsystem.common.airline.UpdateFarePriceCommand}; Exchange:null; RoutingKey:null; Reply:null; DeliveryMode:PERSISTENT; DeliveryTag:0)
+2015-01-31 23:00:33 INFO  AirlineController:109 - RabbitMQ send success search request: (Body:'{"originDestinationInfos":[{"departureDate":"2015-07-19T00:12:00+0700","originCode":"HAN","destinationCode":"SGN","vendor":"VJ"}],"passengerInfos":[{"passengerType":"ADT","quantity":1},{"passengerType":"CHD","quantity":0},{"passengerType":"INF","quantity":0}]}'; ID:null; Content:application/json; Headers:{__TypeId__=com.mbv.ticketsystem.common.airline.UpdateFarePriceCommand}; Exchange:null; RoutingKey:null; Reply:null; DeliveryMode:PERSISTENT; DeliveryTag:0)
+2015-01-31 23:00:33 INFO  AirlineController:114 - webApp: Search data received: UpdateFarePriceCommand [originDestinationInfos=[AirFareInfo [vendor=VJ, classCode=null, reference=null, flightCode=null]], passengerInfos=[AirPassengerTypeQuantity [passengerType=ADT, quantity=1], AirPassengerTypeQuantity [passengerType=CHD, quantity=0], AirPassengerTypeQuantity [passengerType=INF, quantity=0]]]
+2015-01-31 23:00:33 INFO  AirlineController:114 - webApp: Search data received: UpdateFarePriceCommand [originDestinationInfos=[AirFareInfo [vendor=VN, classCode=null, reference=null, flightCode=null]], passengerInfos=[AirPassengerTypeQuantity [passengerType=ADT, quantity=1], AirPassengerTypeQuantity [passengerType=CHD, quantity=0], AirPassengerTypeQuantity [passengerType=INF, quantity=0]]]
+2015-01-31 23:00:33 INFO  AirlineController:114 - webApp: Search data received: UpdateFarePriceCommand [originDestinationInfos=[AirFareInfo [vendor=BL, classCode=null, reference=null, flightCode=null]], passengerInfos=[AirPassengerTypeQuantity [passengerType=ADT, quantity=1], AirPassengerTypeQuantity [passengerType=CHD, quantity=0], AirPassengerTypeQuantity [passengerType=INF, quantity=0]]]
+2015-01-31 23:00:33 INFO  JetstarWorker:26 - JetstarSearch: UpdateFarePriceCommand [originDestinationInfos=[AirFareInfo [vendor=BL, classCode=null, reference=null, flightCode=null]], passengerInfos=[AirPassengerTypeQuantity [passengerType=ADT, quantity=1], AirPassengerTypeQuantity [passengerType=CHD, quantity=0], AirPassengerTypeQuantity [passengerType=INF, quantity=0]]]
+2015-01-31 23:00:33 INFO  VietjetWorker:31 - VietjetSearch:UpdateFarePriceCommand [originDestinationInfos=[AirFareInfo [vendor=VJ, classCode=null, reference=null, flightCode=null]], passengerInfos=[AirPassengerTypeQuantity [passengerType=ADT, quantity=1], AirPassengerTypeQuantity [passengerType=CHD, quantity=0], AirPassengerTypeQuantity [passengerType=INF, quantity=0]]]
+2015-01-31 23:00:33 INFO  JetstarStub:154 - jetstarSearch: function login
+2015-01-31 23:00:33 INFO  VietjetStub:135 - VietjetSeach:function Login
+2015-01-31 23:00:36 INFO  JetstarStub:156 - jetstarSearch: function search

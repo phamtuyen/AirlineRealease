@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xsi:schemaLocation="
+		http://www.springframework.org/schema/mvc 
+		http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-3.2.xsd
+		http://www.springframework.org/schema/rabbit 
+		http://www.springframework.org/schema/rabbit/spring-rabbit-1.1.xsd">
+
+
+    <!-- <rabbit:connection-factory id="rabbitConnectionFactory"
+       host="tiger.cloudamqp.com" virtual-host="uvovalej" username="uvovalej"
+       password="_sUZUawtYN2Hzxw-8Yz54HZPcmU2xUGS" /> -->
+
+    <rabbit:connection-factory id="rabbitConnectionFactory"
+                               host="tiger.cloudamqp.com" virtual-host="mfswprkc" username="mfswprkc"
+                               password="sEhgLAGaZyCRhtYy6rmQrZKBm04DJ3wT"/>
+
+    <bean id="rabbitMessageConverter"
+          class="org.springframework.amqp.support.converter.JsonMessageConverter"/>
+
+    <rabbit:template id="rabbitTemplate"
+                     connection-factory="rabbitConnectionFactory" message-converter="rabbitMessageConverter"/>
+
+    <bean id="JetstarWorkerFactory" class="com.mbv.ticketsystem.airline.jetstar.JetstarWorkerFactory">
+        <property name="name" value="Jetstar"/>
+        <property name="account">
+            <bean class="com.mbv.ticketsystem.airline.jetstar.JetstarAccount">
+                <property name="username" value="MBVtest1"/>
+                <property name="password" value="P@ssword123"/>
+            </bean>
+        </property>
+        <property name="numWorkers" value="3"/>
+    </bean>
+
+    <bean id="VietjetWorkerFactory" class="com.mbv.ticketsystem.airline.vietjet.VietjetWorkerFactory">
+        <property name="name" value="Vietjet"/>
+        <property name="config">
+            <bean class="com.mbv.ticketsystem.airline.vietjet.VietjetConfig">
+                <property name="username" value="AG38197121"/>
+                <property name="password" value="Mobivi123456"/>
+            </bean>
+        </property>
+        <property name="numWorkers" value="5"/>
+    </bean>
+
+    <bean id="AirlineService" class="com.mbv.ticketsystem.airline.AirService" init-method="start" destroy-method="stop">
+        <property name="masterProps">
+            <bean factory-method="create" class="com.mbv.ticketsystem.airline.AirServiceMasterProps">
+                <constructor-arg>
+                    <list>
+                        <ref bean="JetstarWorkerFactory"/>
+                        <ref bean="VietjetWorkerFactory"/>
+                    </list>
+                </constructor-arg>
+                <constructor-arg ref="rabbitTemplate"/>
+            </bean>
+        </property>
+    </bean>
+</beans>
