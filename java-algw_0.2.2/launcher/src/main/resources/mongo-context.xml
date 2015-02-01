@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mongo="http://www.springframework.org/schema/data/mongo"
+       xsi:schemaLocation="
+		http://www.springframework.org/schema/beans 
+		http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+		http://www.springframework.org/schema/context 
+		http://www.springframework.org/schema/context/spring-context-3.2.xsd
+		http://www.springframework.org/schema/data/mongo
+        http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd">
+
+  
+    <!--  <context:property-placeholder location="classpath:*/config.properties"/> -->
+ 
+     <context:property-placeholder location="classpath:config.properties"/>
+     
+   
+   
+
+    <!-- kickass001
+        mongodb://heroku_app12745030:67teh1mrvi7bshqrrjecn450bm
+        @ds029297.mongolab.com:29297/heroku_app12745030-->
+    <!-- kickass011
+        mongodb://heroku_app15024446:up9gitc3nn3ft3825ud8k5ap5u
+        @ds035127.mongolab.com:35127/heroku_app15024446 -->
+
+    <!--<mongo:db-factory id="mongoDbFactory" host="ds035127.mongolab.com"-->
+    <!--port="35127" dbname="heroku_app15024446" username="airlineweb"-->
+    <!--password="Aesx5099" />-->
+
+    <mongo:db-factory id="mongoDbFactory" host="${mongodb.host}"
+                      port="${mongodb.port}" dbname="${mongodb.database}" username="${mongodb.username}"
+                      password="${mongodb.password}"/>
+
+    <bean id="mongoMappingConverter"
+          class="org.springframework.data.mongodb.core.convert.MappingMongoConverter">
+        <constructor-arg name="mongoDbFactory" ref="mongoDbFactory"/>
+        <constructor-arg name="mappingContext">
+            <bean
+                    class="org.springframework.data.mongodb.core.mapping.MongoMappingContext"/>
+        </constructor-arg>
+        <property name="typeMapper">
+            <bean
+                    class="org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper">
+                <constructor-arg name="typeKey">
+                    <null/>
+                </constructor-arg>
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="mongoTemplate" class="org.springframework.data.mongodb.core.MongoTemplate">
+        <property name="writeResultChecking" value="EXCEPTION"/>
+        <property name="writeConcern" value="FSYNC_SAFE"/>
+        <constructor-arg name="mongoDbFactory" ref="mongoDbFactory"/>
+        <constructor-arg name="mongoConverter" ref="mongoMappingConverter"/>
+    </bean>
+</beans>
