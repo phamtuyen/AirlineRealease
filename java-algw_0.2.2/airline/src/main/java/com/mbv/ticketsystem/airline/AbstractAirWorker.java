@@ -100,31 +100,44 @@ public abstract class AbstractAirWorker extends UntypedActor {
 					String hashString = updatePriceCommand.toHashString();                        
 					AirFarePriceInfos result = farePriceCache.find(hashString);   
 					AirFareInfo fareInfo0 = itinerary.getFareInfos().get(0);
-					String reference0 = fareInfo0.getReference();					
+					String reference0 = fareInfo0.getReference();	
+					String flightCode = fareInfo0.getFlightCode();
+					String classCode = fareInfo0.getClassCode();
 					ArrayList<AirFareInfo> listAirFareInfo = (ArrayList<AirFareInfo>)itinerary.getFareInfos();
 					List<AirPassengerInfo> listAirPassengerInfo = (List<AirPassengerInfo>)itinerary.getPassengerInfos();
 					UpdateFarePriceCommand request = new UpdateFarePriceCommand();
 					request.setOriginDestinationInfos(listAirFareInfo);
 					request.setPassengerInfos(getAirPassengerTypeQuantity(listAirPassengerInfo));
-					long sumPrices = sumPrices(result,reference0,request);		
+					
+					long sumPrices = sumPrices(result,reference0,request,flightCode);		
 					String vendor = fareInfo0.getVendor();
-					List<AirExtraService> extraServices = itinerary.getExtraServices();{
+					List<AirExtraService> extraServices = itinerary.getExtraServices();
+					{
 						if(extraServices != null)
 							for(int i=0;i<extraServices.size();i++){
 								AirExtraService service = extraServices.get(i);
-								if(vendor.equals("BL"))								
-									sumPrices += jetstarLuggage(service);
+								if(vendor.equals("BL") && service.getHaveReturn().equals("0"))								
+									sumPrices += jetstarLuggage(service,classCode);
 							}
 					}
-					if(vendor.equals("BL")){
-						AirFareInfo fareInfo1 =  null;
-						String reference1 = "";
-						if(itinerary.getFareInfos().size() == 2){
-							fareInfo1 = itinerary.getFareInfos().get(1); 
-							reference1 = fareInfo1.getReference();
-							sumPrices += sumPrices(result,reference1,request);
-						}   
-					}
+									
+					AirFareInfo fareInfo1 =  null;
+					String reference1 = "";
+					if(itinerary.getFareInfos().size() == 2){
+						fareInfo1 = itinerary.getFareInfos().get(1); 
+						reference1 = fareInfo1.getReference();
+						flightCode = fareInfo1.getFlightCode();
+						sumPrices += sumPrices(result,reference1,request,flightCode);
+						
+						classCode = fareInfo1.getClassCode();
+						if(extraServices != null)
+							for(int i=0;i<extraServices.size();i++){
+								AirExtraService service = extraServices.get(i);
+								if(vendor.equals("BL") && service.getHaveReturn().equals("1"))								
+									sumPrices += jetstarLuggage(service,classCode);
+							}
+					}   
+					
 					logger.info("Received: " + getSelf() +  ": " + itinerary.toString());
 					doBook(itinerary, sumPrices);				
 					AirTicketingInfo ticketingInfo = itinerary.getTicketingInfo();
@@ -137,6 +150,7 @@ public abstract class AbstractAirWorker extends UntypedActor {
 				}
 				try {					
 					itineraryRepository.update(itinerary);
+					logger.info("Result Book"+ itinerary.toString());
 				} catch (Exception ex) {
 					logger.error(ex.getMessage());
 				}
@@ -152,6 +166,7 @@ public abstract class AbstractAirWorker extends UntypedActor {
 						itineraryRepository.update(itinerary);
 						doBuy(itinerary);
 						itineraryRepository.update(itinerary);
+						logger.info("Result Pay"+ itinerary.toString());
 					} catch (Exception ex) {
 						logger.error(ex.getMessage());
 					}
@@ -169,7 +184,7 @@ public abstract class AbstractAirWorker extends UntypedActor {
 		}	
 		getContext().parent().tell(availableMessage, getSelf());
 	}
-	
+
 	private AirFarePriceInfos updateFarePriceInfos(UpdateFarePriceCommand command) {
 		AirFarePriceInfos result = doSearch(command);
 		if (result != null) {
@@ -190,38 +205,52 @@ public abstract class AbstractAirWorker extends UntypedActor {
 	protected abstract void doBook(AirItinerary itinerary, long sumPrices);
 
 	protected abstract void doBuy(AirItinerary itinerary);
-	
+
 	protected abstract void doSearchBookingId(AirItinerary itinerary);
-	
-	public long jetstarLuggage(AirExtraService service){
+
+	public long jetstarLuggage(AirExtraService service,String classCode){
 		long sum = 0;
 		String pasKg = service.getServiceCode();
-		if(pasKg.equals("BG15"))
-			sum += 143000;
-		if(pasKg.equals("BG20"))
-			sum += 165000;
-		if(pasKg.equals("BG25"))
-			sum += 220000;
-		if(pasKg.equals("BG30"))
-			sum += 270000;
-		if(pasKg.equals("BG35"))
-			sum += 320000;
-		if(pasKg.equals("BG40"))
-			sum += 370000;
+		if(classCode.equals("RY")){
+			if(pasKg.equals("BG25"))
+				sum += 30000;
+			if(pasKg.equals("BG30"))
+				sum += 50000;
+			if(pasKg.equals("BG35"))
+				sum += 143000;
+			if(pasKg.equals("BG40"))
+				sum += 165000;
+		}	
+		else
+		{
+			if(pasKg.equals("BG15"))
+				sum += 143000;
+			if(pasKg.equals("BG20"))
+				sum += 165000;
+			if(pasKg.equals("BG25"))
+				sum += 220000;
+			if(pasKg.equals("BG30"))
+				sum += 270000;
+			if(pasKg.equals("BG35"))
+				sum += 320000;
+			if(pasKg.equals("BG40"))
+				sum += 370000;
+		}
 		return sum;
 	}
-	
-	private long sumPrices(AirFarePriceInfos result,String reference,UpdateFarePriceCommand request){
+
+	private long sumPrices(AirFarePriceInfos result,String reference,UpdateFarePriceCommand request,String flightCode){
 		long sum = 0;
 		int numADT = request.getPassengerQuantity(AirPassengerType.ADT);
 		int numCHD = request.getPassengerQuantity(AirPassengerType.CHD);
 		int numINF = request.getPassengerQuantity(AirPassengerType.INF);
-		List<AirFarePriceOption> priceOptions = null;
+		List<AirFarePriceOption> priceOptions = null;		
 		for(int i = 0;i < result.size();i++){
 			priceOptions = result.get(i).getPriceOptions();
 			for(int j = 0;j < priceOptions.size();j++){ 
-				AirFarePriceOption priceOption = priceOptions.get(j);                    		
-				if(priceOption.getReference().equals(reference)){                    		
+				AirFarePriceOption priceOption = priceOptions.get(j); 
+				String flight_Code = result.get(i).getFareInfo().getFlightCode();
+				if(priceOption.getReference().equals(reference) && flight_Code.equals(flightCode)){                    		
 					List<AirPassengerTypePrice> priceDetail = priceOption.getPriceDetail();
 					for(int k = 0;k < priceDetail.size();k++){
 						if(k==0)
@@ -236,7 +265,7 @@ public abstract class AbstractAirWorker extends UntypedActor {
 		}    	      
 		return sum;
 	}
-	
+
 	public ArrayList<AirPassengerTypeQuantity> getAirPassengerTypeQuantity(List<AirPassengerInfo> listAirPassengerInfo){
 		ArrayList<AirPassengerTypeQuantity> list = new ArrayList<AirPassengerTypeQuantity>();
 		int curADT = 0;

@@ -1,0 +1,32 @@
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+    <!-- general application log -->
+    <appender name="BarLogFile" class="org.apache.log4j.FileAppender">
+        <param name="File" value="logs/bar.log" />
+        <param name="Threshold" value="INFO" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%-5p %t [%-40.40c] %x - %m%n"/>
+        </layout>
+    </appender> 
+
+    <!-- additional fooSystem logging -->
+    <appender name="BlatzLogFile" class="org.apache.log4j.FileAppender">
+        <param name="File" value="logs/blatz.log" />
+        <layout class="org.apache.log4j.PatternLayout">
+            <param name="ConversionPattern" value="%-5p %t [%-40.40c] %x - %m%n"/>
+        </layout>
+    </appender>
+
+    <logger name="com.mbv.ticketsystem.airline.check">
+        <appender-ref ref="BarLogFile"/>
+    </logger>
+
+    <logger name="com.mbv.ticketsystem.launcher">
+        <appender-ref ref="BlatzLogFile"/>
+    </logger>
+
+    <root>
+        <level value="INFO"/>
+        <!-- no appender, output will be swallowed (I think) -->
+    </root>
+</log4j:configuration>

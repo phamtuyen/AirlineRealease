@@ -3,16 +3,26 @@ package com.mbv.ticketsystem.airline.vietjet;
 public class VietjetConfig {
     private String username;
     private String password;
-    private String loginViewState;
+//    private String loginViewState;
+    private String ipAddress;
 
     public VietjetConfig() {
 
     }
 
-    public VietjetConfig(String username, String password, String loginViewState) {
+    public String getIpAddress() {
+		return ipAddress;
+	}
+
+	public void setIpAddress(String ipAddress) {
+		this.ipAddress = ipAddress;
+	}
+
+	public VietjetConfig(String username, String password,String ipAddress) {
         this.username = username;
         this.password = password;
-        this.loginViewState = loginViewState;
+//        this.loginViewState = loginViewState;
+        this.ipAddress = ipAddress;
    
     }
     
@@ -35,13 +45,5 @@ public class VietjetConfig {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getLoginViewState() {
-        return loginViewState;
-    }
-
-    public void setLoginViewState(String viewState) {
-        this.loginViewState = viewState;
     }
 }

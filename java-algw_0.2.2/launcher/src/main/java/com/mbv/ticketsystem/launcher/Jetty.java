@@ -128,6 +128,7 @@ public class Jetty implements ApplicationContextAware, Daemon {
 //        final Logger logger = LoggerFactory.getLogger(Jetty.class);
     	final Logger logger = Logger.getLogger(Jetty.class);
         try {
+        	logger.info("Jetty started port: 8181"); 
             Jetty jetty = new Jetty();
             jetty.start();
         } catch (Exception e) {

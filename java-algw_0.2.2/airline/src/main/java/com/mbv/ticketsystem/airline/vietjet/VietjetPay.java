@@ -25,7 +25,7 @@ public class VietjetPay {
 					.data(params)
 					.cookie("ASP.NET_SessionId", sessId)
 					.method(Method.POST)
-					.timeout(30000)
+					.timeout(3000000)
 					.execute();
 		} catch (Exception ex) {
 			throw new Exception("CONNECTION_ERROR");

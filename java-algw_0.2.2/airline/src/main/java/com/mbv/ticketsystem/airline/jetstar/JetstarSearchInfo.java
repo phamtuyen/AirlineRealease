@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -21,6 +22,7 @@ import com.mbv.ticketsystem.common.airline.AirPassengerType;
 import com.mbv.ticketsystem.common.airline.AirTicketingStatus;
 
 public class JetstarSearchInfo {
+	final static Logger logger = Logger.getLogger(JetstarSearchInfo.class);
 	public AirItinerary swapItinerary(AirItinerary itineraryOld,AirItinerary itineraryNew ){	
 		itineraryOld.getTicketingInfo().setAmount(itineraryNew.getTicketingInfo().getAmount());
 		itineraryOld.getTicketingInfo().setStatus(AirTicketingStatus.BOOK_SUCCESS);
@@ -59,9 +61,14 @@ public class JetstarSearchInfo {
 		return extraServices;
 	}
 	
-	public int countCHD(JSONObject objJson){		
-		JSONObject paxCount = (JSONObject) objJson.get("paxCount");		
-		String chd = paxCount.get("CHD").toString();
+	public int countCHD(JSONObject objJson){	
+		String chd = "";
+		try {
+			JSONObject paxCount = (JSONObject) objJson.get("paxCount");		
+			chd = paxCount.get("CHD").toString();
+		} catch (Exception ex) {
+			logger.error("Retry bookID: " + ex.getMessage()); 
+		}
 		if(chd.equals(""))
 			return 0;
 		return Integer.parseInt(chd);

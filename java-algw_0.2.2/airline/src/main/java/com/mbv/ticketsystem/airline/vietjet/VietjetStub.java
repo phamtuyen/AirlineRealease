@@ -1,9 +1,5 @@
 package com.mbv.ticketsystem.airline.vietjet;
 
-
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
 import java.net.URL;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -42,9 +38,11 @@ import com.mbv.ticketsystem.common.base.ContactInfo;
 @SuppressWarnings("serial")
 public class VietjetStub {
 	private String viewstate;
+	private String viewstateLogin = "";
 	private String sessId; 		
 	private VietjetBook vjBook = null;   
 	private VietjetPay vjPay = null; 
+	private String ipAddress;
 
 	private String urlLogin = "https://ameliaweb5.intelisys.ca/VietJet/sitelogin.aspx?lang=vi";
 	private String urlMenu = "https://ameliaweb5.intelisys.ca/VietJet/AgentOptions.aspx?lang=vi&sesid=";
@@ -69,11 +67,13 @@ public class VietjetStub {
 			{
 				put("DebugID", "61");
 				put("SesID", "");
-				put("__VIEWSTATE", config.getLoginViewState());
+//				put("__VIEWSTATE", config.getLoginViewState());
+				put("__VIEWSTATE", viewstateLogin);
 				put("txtAgentID", config.getUsername());
 				put("txtAgentPswd", config.getPassword());				
 			}
 		};	
+		ipAddress = config.getIpAddress();
 	}
 
 	private HashMap<String, String> createSearchParams(UpdateFarePriceCommand request,final String viewstate) throws Exception {
@@ -143,6 +143,7 @@ public class VietjetStub {
 			throw new Exception("Get_Login Exception");
 		ArrayList<String > list = vjBook.getDocumentJsoup((Connection.Response) resGetLogin);
 		viewstate = list.get(0);
+		viewstateLogin = list.get(0);
 		sessId = list.get(1);
 		Connection.Response resPostLogin = vjBook.postProcess(urlLogin,loginParams,sessId);   
 		urlResult = resPostLogin.url();
@@ -234,18 +235,18 @@ public class VietjetStub {
 		URL urlResult = resGetDetail.url();
 		if (!urlResult.toString().equals(urlDetail))
 			throw new Exception("Get_Detail Exception");
-		Document document = Jsoup.parse(resGetDetail.body());	
-		String sumAmount1 = document.getElementById("Leg1BSTotalFare").text().replace(",", "");  
-		long amountPrice = Long.valueOf(sumAmount1).longValue();
-		String sumAmount2 = "";		
-		if(itinerary.getFareInfos().size() == 2){
-			sumAmount2 = document.getElementById("Leg2BSTotalFare").text().replace(",", "");
-			amountPrice += Long.valueOf(sumAmount2).longValue();
-		}				
-		if(sumPrices != amountPrice){
-			logger.info("vietjetDetail Compare prices: Result false" );
-			return false;
-		}		
+//		Document document = Jsoup.parse(resGetDetail.body());	
+//		String sumAmount1 = document.getElementById("Leg1BSTotalFare").text().replace(",", "");  
+//		long amountPrice = Long.valueOf(sumAmount1).longValue();
+//		String sumAmount2 = "";		
+//		if(itinerary.getFareInfos().size() == 2){
+//			sumAmount2 = document.getElementById("Leg2BSTotalFare").text().replace(",", "");
+//			amountPrice += Long.valueOf(sumAmount2).longValue();
+//		}				
+//		if(sumPrices != amountPrice){
+//			logger.info("vietjetDetail Compare prices: Result false" );
+//			return false;
+//		}		
 		ArrayList<String> list = vjBook.getDocumentJsoup((Connection.Response) resGetDetail);
 		viewstate = list.get(0);			
 		List<AirPassengerInfo> passengerInfos = itinerary.getPassengerInfos();
@@ -312,12 +313,23 @@ public class VietjetStub {
 				index++;
 			} 
 		}
+		
+		Elements purchasedItemInfoDets = document.getElementsByClass("PurchasedItemInfoDets");
+		Element  purchasedItemInfoDet = purchasedItemInfoDets.get(0);
+		String purchasedValue = purchasedItemInfoDet.select(".PurchasedItemInfoDets").attr("id");
+		String []partpurchaseValues = purchasedValue.split(":");
+		String purchaseValue = partpurchaseValues[3];
 
 		ArrayList<AirPassengerTypeQuantity> passengerInfosList = vjBook.getAirPassengerTypeQuantity(listAirPassengerInfo);
 		int adt_chd = passengerInfosList.get(0).getQuantity() + passengerInfosList.get(1).getQuantity();
-		Connection.Response resPostAddOns =  vjBook.postProcess(urlAddOns,vjBook.createPostAddOnsParams(roundTrip,adt_chd,extraServices,listAttrPasKg,listAttrPasKgBack,glagMeal,viewstate),sessId);
+		Connection.Response resPostAddOns = null;
+		if(purchaseValue.equals("8"))
+			resPostAddOns =  vjBook.postProcess(urlAddOns,vjBook.createPostAddOnsParams(roundTrip,adt_chd,extraServices,listAttrPasKg,listAttrPasKgBack,glagMeal,viewstate),sessId);
+		else
+			resPostAddOns =  vjBook.postProcess(urlAddOns,vjBook.createPostAddOnsParams2(roundTrip,adt_chd,extraServices,listAttrPasKg,listAttrPasKgBack,glagMeal,viewstate),sessId);
 		// 
-		urlResult = resPostAddOns.url();
+		urlResult = resPostAddOns.url();		
+		logger.info("CHECK VIETJET ADDONS: " + urlResult.toString());
 		if (!urlResult.toString().contains("Payments.aspx"))	{
 			logger.error("VietjetBook: Post_AddOns Exception");
 			throw new Exception("Post_AddOns Exception");
@@ -345,19 +357,6 @@ public class VietjetStub {
 		URL urlResult = resGetConfirm.url();
 		if (!urlResult.toString().equals(urlConfirm))
 			throw new Exception("Get_Confirm Exception");
-		
-		Document document = Jsoup.parse(resGetConfirm.body());		
-		String content = document.html();			
-		File file = new File("/home/phamtuyen/parse.txt");
-		// if file doesnt exists, then create it
-		if (!file.exists()) {
-			file.createNewFile();
-		}
-		FileWriter fw = new FileWriter(file.getAbsoluteFile());
-		BufferedWriter bw = new BufferedWriter(fw);
-		bw.write(content);
-		bw.close();	
-		
 		ArrayList<String > list = vjBook.getDocumentJsoup((Connection.Response) resGetConfirm);
 		viewstate = list.get(0);			
 		Connection.Response resPostConfirm = vjBook.postProcess(urlConfirm,vjBook.createPostConfirmParams(viewstate),sessId);	
@@ -414,15 +413,68 @@ public class VietjetStub {
 			addonsBookVietJet(itinerary);	
 			logger.info("VietjetBook:function payment");			
 			paymentsBookVietJet(itinerary);
-			logger.info("VietjetBook:function confirm");
-			confirmBookVietJet();
-			logger.info("VietjetBook:function itinerary");
-			return itineraryBookVietJet();		
+//			logger.info("VietjetBook:function confirm");
+//			confirmBookVietJet();
+//			logger.info("VietjetBook:function itinerary");
+//			return itineraryBookVietJet();		
+			
+			
+			logger.info("VietjetBook:TEST");
+			Connection.Response resPayments = vjBook.getProcess(urlConfirm,sessId);	
+			Document document = Jsoup.parse(resPayments.body());					
+			URL urlResult = resPayments.url();
+			BookResult result = null;
+			if (!urlResult.toString().contains("Confirm.aspx"))
+				return result;		
+			else{									
+				String amountBook = document.select("#rescharges > tbody > tr.ChargesTotal > td:nth-child(2) > strong").text();
+				long sumAmount = Long.valueOf(amountBook.replace(",", "")).longValue(); 				
+				result = new BookResult();	
+				VietjetBookID bookingNew = new VietjetBookID();
+				String reservationCode = bookingNew.createBookID(urlPayments,ipAddress);
+				result.setReservationCode(reservationCode); 
+				result.setAmount(sumAmount);
+				return result;
+			}		
 		} catch (Exception ex) {
 			logger.error("VietjetBook: " + ex.toString()); 
 			throw ex;
 		}
 	}
+	
+	private void detailBook(AirItinerary itinerary) throws Exception{
+		Connection.Response resGetDetail = vjBook.getProcess(urlDetail,sessId);
+		URL urlResult = resGetDetail.url();
+		if (!urlResult.toString().equals(urlDetail))
+			throw new Exception("Get_Detail Exception");
+		
+		ArrayList<String> list = vjBook.getDocumentJsoup((Connection.Response) resGetDetail);
+		viewstate = list.get(0);			
+		List<AirPassengerInfo> passengerInfos = itinerary.getPassengerInfos();
+		ContactInfo contactInfo = itinerary.getContactInfo();
+		Connection.Response resPostDetail = vjBook.postProcess(urlDetail,vjBook.createPostDetailParams(passengerInfos,contactInfo,viewstate),sessId);
+		urlResult = resPostDetail.url();
+		if (!urlResult.toString().contains("AddOns.aspx"))		{
+			logger.error("VietjetBook: Post_Detail Exception");
+			throw new Exception("Post_Detail Exception");
+		}		
+	}
+	
+	public boolean verifyBook(AirItinerary itinerary) throws Exception{
+		loginBookVietJet();	
+		menuBookVietJet(); 
+		searchBookVietJet(itinerary);	
+		travelBookVietJet(itinerary);
+		detailBook(itinerary);			
+		addonsBookVietJet(itinerary);	
+		paymentsBookVietJet(itinerary);	
+		Connection.Response resComfirm = vjBook.getProcess(urlConfirm,sessId);					
+		URL urlResult = resComfirm.url();		
+		if (!urlResult.toString().contains("Confirm.aspx"))
+			return false;
+		return true;
+	}
+	
 
 	private AirItinerary vietjetSearchBookIdEditRes() throws Exception{
 		String urlEditRes = "https://ameliaweb5.intelisys.ca/VietJet/EditRes.aspx?lang=vi&st=sl&sesid=";
@@ -699,12 +751,37 @@ public class VietjetStub {
 			searchResTwoBuyVietJet(itinerary);
 			logger.info("VietjetPayMent:function recindFucnc");
 			recindFunctionBuyVietJet();
-			logger.info("VietjetPayMent:function editRes");
-			editResBuyVietJet();			
-			logger.info("VietjetPayMent:function addPayment");
-			addPaymentBuyVietJet(itinerary);
-			logger.info("VietjetPayMent:function processingBuy");
-			return processingBuyVietJet();		
+//			logger.info("VietjetPayMent:function editRes");
+//			editResBuyVietJet();			
+//			logger.info("VietjetPayMent:function addPayment");
+//			addPaymentBuyVietJet(itinerary);
+//			logger.info("VietjetPayMent:function processingBuy");
+//			return processingBuyVietJet();		
+			
+			
+			// TEST			     
+			String urlEditRes = "https://ameliaweb5.intelisys.ca/VietJet/EditRes.aspx?lang=vi&st=sl&sesid=";
+			Connection.Response resGetEditRes = vjPay.getProcess(urlEditRes,sessId);
+			URL urlResult = resGetEditRes.url();
+			BuyResult result = null;
+			if (!urlResult.toString().contains("EditRes.aspx")){
+				String[] ticketNumbers = new String[10];					
+				String ticketNumber = "0000000";  
+				ticketNumbers[0] = 	ticketNumber;
+				result = new BuyResult(ticketNumbers);
+				return result;	
+			}				
+			else{				
+				String[] ticketNumbers = new String[10];					
+				String ticketNumber = "1234567";  
+				ticketNumbers[0] = 	ticketNumber;
+				result = new BuyResult(ticketNumbers);
+				return result;
+			}	
+			// End TEST
+
+
+			
 		} catch (Exception ex) {
 			throw ex;
 		}

@@ -46,7 +46,7 @@ public class JetstarBook {
 					.data(params)
 					.cookie("ASP.NET_SessionId", sessId)
 					.method(Method.POST)
-					.timeout(30000)
+					.timeout(3000000)
 					.execute();
 		} catch (Exception ex) {
 			throw new Exception("CONNECTION_ERROR");
@@ -313,13 +313,20 @@ public class JetstarBook {
 				}
 
 				// Process Max
+				int backSVCount = 0;
+				int indexSVBack = 0;
+				if(extraServices != null){
+					backSVCount =  searchService(extraServices).get(0);
+					indexSVBack = searchService(extraServices).get(1);
+				}
+					
 				for(int i = 0;i < customers; i++){
 					 if(extraServices == null || extraServices.size() == 0)
 						params.put(selectParams + "Journey1Pax"+i+"", "none");
 					else{
 						AirFareInfo fareInfo = fareInfos.get(1);
-						int backSVCount =  searchService(extraServices).get(1);
-						if(i+1 <= backSVCount){
+//						int backSVCount =  searchService(extraServices).get(1);
+						if(i+1 <= indexSVBack){
 							// if value = max
 							if(fareInfo.getClassCode().equals("RY")){
 								String classCode  = getServiceCode(extraServices,backSVCount);

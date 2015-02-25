@@ -32,7 +32,7 @@ public class VietjetBook {
 					.data(params)
 					.cookie("ASP.NET_SessionId", sessId)
 					.method(Method.POST)
-					.timeout(300000)
+					.timeout(800000000)
 					.execute();
 		} catch (Exception ex) {
 			throw new Exception("CONNECTION_ERROR");
@@ -43,7 +43,7 @@ public class VietjetBook {
 		return Jsoup.connect(url)
 				.userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:5.0) Gecko/20100101 Firefox/5.0")
 				.method(Method.GET)
-				.timeout(300000)
+				.timeout(800000)
 				.execute();
 	}
 
@@ -52,7 +52,7 @@ public class VietjetBook {
 				.userAgent("Mozilla/5.0 (Windows NT 6.1; WOW64; rv:5.0) Gecko/20100101 Firefox/5.0")
 				.cookie("ASP.NET_SessionId", sessId)
 				.method(Method.GET)
-				.timeout(300000)
+				.timeout(800000)
 				.execute();
 	}
 
@@ -287,7 +287,7 @@ public class VietjetBook {
 		params.put("ctrSeatAssP", ""+ADT_CHD);
 	}
 		
-	public HashMap<String, String> createPostAddOnsParams(final int RoundTrip, final int ADT_CHD,ArrayList<AirExtraService> extraServices,List<String> listAttrPasKg,List<String> listAttrPasKgBack,final int glagMeal,final String viewstate) throws  VietJetBookException {
+	public HashMap<String, String> createPostAddOnsParams2(final int RoundTrip, final int ADT_CHD,ArrayList<AirExtraService> extraServices,List<String> listAttrPasKg,List<String> listAttrPasKgBack,final int glagMeal,final String viewstate) throws  VietJetBookException {
 		try {
 			HashMap<String, String> params = new HashMap<String, String>();			
 			String button = "continue";
@@ -409,6 +409,142 @@ public class VietjetBook {
 					what += 7;
 				}			
 			}
+			return params;
+		} catch (Exception ex) {
+			throw new VietJetBookException("INVALID_REQUEST");
+		}
+	}
+	
+	public HashMap<String, String> createPostAddOnsParams(final int RoundTrip, final int ADT_CHD,ArrayList<AirExtraService> extraServices,List<String> listAttrPasKg,List<String> listAttrPasKgBack,final int glagMeal,final String viewstate) throws  VietJetBookException {
+		try {
+			HashMap<String, String> params = new HashMap<String, String>();			
+			String button = "continue";
+			createParams(params,button,viewstate);
+			convertAddOnsParams(params,RoundTrip,ADT_CHD);
+			if(RoundTrip == 1){
+				int what = 8;
+				for(int i = 1; i <= ADT_CHD; i++){
+					params.put("m1p" + i + "", "");
+					params.put("m1p" + i + "rpg", "");
+					if(extraServices == null || extraServices.size() == 0)
+					{
+						params.put("lstPaxItem:-"+i+":1:"+what+"", "-1");
+						params.put("-1", "-1");
+					}
+					else
+					{
+						if(i <= extraServices.size()){
+							String pasKg = extraServices.get(i-1).getServiceCode();
+							int indexPass = findIndexPass(pasKg);
+							String hidPaxItem = findPassKG(pasKg,listAttrPasKg);  	
+							String numberPas = splitItemPass(hidPaxItem);
+							
+							params.put("lstPaxItem:-"+i+":1:"+what+"", ""+indexPass+":-"+i+":"+numberPas+":1");
+							params.put("hidPaxItem:-"+i+":"+indexPass+":1", hidPaxItem);
+						}
+						else{
+							params.put("lstPaxItem:-"+i+":1:"+what+"", "-1");
+							params.put("-1", "-1");
+						}                	
+					}   
+
+					if(glagMeal == 1){					
+						createMealParams(params,i);
+					}
+					what += 14;
+				}
+			}			
+			if(RoundTrip == 2){
+
+				params.put("m2th", "2");
+				params.put("m2p", "1");
+
+				int what = 8;
+				for(int i = 1; i <= ADT_CHD; i++){
+					// one way
+					params.put("m1p" + i + "", "");
+					params.put("m1p" + i + "rpg", "");
+					// return
+					params.put("m2p" + i + "", "");
+					params.put("m2p" + i + "rpg", "");
+
+					if(extraServices == null || extraServices.size() == 0)
+					{						
+						params.put("lstPaxItem:-"+i+":1:"+what+"", "-1");
+						params.put("-1", "-1");										
+					}
+					else
+					{						
+						// int count GO
+						List<Integer> list = searchService(extraServices);
+						int go = list.get(0);
+						if(i <= go){
+							String pasKg = extraServices.get(i-1).getServiceCode();  // point get getPassengerRefenerence();							
+							int indexPass = findIndexPass(pasKg);
+							String hidPaxItem = findPassKG(pasKg,listAttrPasKg);  	
+							String numberPas = splitItemPass(hidPaxItem);
+							// One way							
+							params.put("lstPaxItem:-"+i+":1:"+what+"", ""+indexPass+":-"+i+":"+numberPas+":1");						
+							params.put("hidPaxItem:-"+i+":"+indexPass+":1", hidPaxItem);
+
+						}
+						else{
+							params.put("lstPaxItem:-"+i+":1:"+what+"", "-1");
+							params.put("-1", "-1");
+						} 
+					}
+
+					if(glagMeal == 1){
+						// one way
+						createMealParams(params,i);
+					}					
+					what += 28;
+				}
+				// BACK
+				what = 22;
+				int go = 0;
+				int back = 0;
+				if(extraServices != null){
+					List<Integer> list = searchService(extraServices);
+					 go = list.get(0);
+					 back = list.get(1);
+				}		
+				
+				for(int i = 1; i <= ADT_CHD; i++){					
+					if(extraServices == null || extraServices.size() == 0)
+					{										
+						params.put("lstPaxItem:-"+i+":2:"+what+"", "-1");
+						params.put("-1", "-1");
+					}
+					else
+					{						
+						// int count GO
+//						List<Integer> list = searchService(extraServices);
+//						int go = list.get(0);
+//						int back = list.get(1);
+						if(i <= back){
+							String pasKg = extraServices.get(go).getServiceCode();
+							go++;						
+							int indexPass = findIndexPass(pasKg);
+							String hidPaxItem = findPassKG(pasKg,listAttrPasKgBack);  	
+							String numberPas = splitItemPass(hidPaxItem);
+							// return
+							params.put("lstPaxItem:-"+i+":2:"+what+"", ""+indexPass+":-"+i+":"+numberPas+":2");						
+							params.put("hidPaxItem:-"+i+":"+indexPass+":2", hidPaxItem);
+						}
+						else{
+							params.put("lstPaxItem:-"+i+":2:"+what+"", "-1");
+							params.put("-1", "-1");
+						} 
+					}
+					if(glagMeal == 1){
+						// return
+						createMealRoundTripParams(params,i);
+					}
+					what += 28;
+				}			
+			}
+			
 			return params;
 		} catch (Exception ex) {
 			throw new VietJetBookException("INVALID_REQUEST");

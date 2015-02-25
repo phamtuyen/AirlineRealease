@@ -12,9 +12,9 @@
         http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd">
 
   
-    <!--  <context:property-placeholder location="classpath:*/config.properties"/> -->
+     <context:property-placeholder location="classpath:*/config.properties"/>
  
-     <context:property-placeholder location="classpath:config.properties"/>
+    <!--  <context:property-placeholder location="classpath:config.properties"/> -->
      
    
    

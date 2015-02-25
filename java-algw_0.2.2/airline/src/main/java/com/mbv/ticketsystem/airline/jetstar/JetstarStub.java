@@ -33,10 +33,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-
-//import java.io.BufferedWriter;
-//import java.io.File;
-//import java.io.FileWriter;
 import java.net.URI;
 import java.net.URL;
 import java.text.DateFormat;
@@ -62,6 +58,7 @@ public class JetstarStub {
 	private String totalPrice;
 	private String user = "";
 	private String password = "";
+	private String ipAddress;
 	private JetstarBook jetStarBook = null;
 	private JetstarPay jetStarPay = null;
 	private HashMap<String, String> loginForm;
@@ -83,7 +80,8 @@ public class JetstarStub {
 			}
 		};	
 		user = jetstarAccount.getUsername();
-		password = jetstarAccount.getPassword();				
+		password = jetstarAccount.getPassword();
+		ipAddress = jetstarAccount.getIpAddress();
 	}
 
 	private HashMap<String, String> CreateSearchForm(UpdateFarePriceCommand airSearchRequest,final String viewstate) throws Exception {
@@ -439,20 +437,22 @@ public class JetstarStub {
 		URL urlResult = resurlGetAgentPassenger.url();
 		if (!urlResult.toString().equals(urlAgentPassenger))
 			throw new Exception("Get_BookAgentPassenger Exception");	
+		
 		// Compare prices
-		Document document = Jsoup.parse(resurlGetAgentPassenger.body());	
-		Elements elements = document.getElementsByClass("cash");
-		long sumAmount = 0;
-		for (Element element : elements) {
-			String amount = element.getElementsByTag("span").text().replaceAll("[^\\d]","");		
-			sumAmount += Long.valueOf(amount).longValue();
-		}					
-		if(sumAmount != sumPrices){
-			return false;
-		}								
+//		Document document = Jsoup.parse(resurlGetAgentPassenger.body());	
+//		Elements elements = document.getElementsByClass("cash");
+//		long sumAmount = 0;
+//		for (Element element : elements) {
+//			String amount = element.getElementsByTag("span").text().replaceAll("[^\\d]","");		
+//			sumAmount += Long.valueOf(amount).longValue();
+//		}					
+//		if(sumAmount != sumPrices){
+//			return false;
+//		}					
+		
 		ArrayList<String >  list = jetStarBook.getDocumentJsoup((Connection.Response) resurlGetAgentPassenger);
 		viewState = list.get(0);	
-		document = Jsoup.parse(resurlGetAgentPassenger.body());			
+		Document document = Jsoup.parse(resurlGetAgentPassenger.body());			
 		totalPrice = document.getElementById("total_price").val();		
 		ContactInfo contactInfo = itinerary.getContactInfo();	
 		AgentInfo agentInfo = itinerary.getAgentInfo();			
@@ -539,10 +539,83 @@ public class JetstarStub {
 			return result;
 		}
 		logger.info("jetstarBook: function AgentPay");
-		jetStarBookAgentPay();   
+//		jetStarBookAgentPay();   
 		logger.info("jetstarBook: function Itinerary");
-		return jetStarBookItinerary();		
+//		return jetStarBookItinerary();			
+		return jetStarBookAgentPayTEST();
 	}
+	
+	private BookResult jetStarBookAgentPayTEST() throws Exception{
+		BookResult result = new BookResult();
+		String urlAgentPay = baseUrl + "AgentPay.aspx";
+		Connection.Response resurlGetAgentPay = jetStarBook.getProcess(urlAgentPay,sessId);				
+		URL urlResult = resurlGetAgentPay.url();
+		if (!urlResult.toString().equals(urlAgentPay))
+			throw new Exception("Get_BookAgentPay Exception");
+		
+		Document document = Jsoup.parse(resurlGetAgentPay.body());	
+		String amount = document.select("#summary-amount-total > span > span"). text().replaceAll("[^\\d]",""); 	
+		long sumAmount = Long.parseLong(amount);
+		
+		JetstarBookID bookingNew = new JetstarBookID();
+		String reservationCode = bookingNew.createBookID(urlAgentPay,ipAddress);
+		result.setReservationCode(reservationCode);
+		result.setAmount(sumAmount);		
+		return result;				  
+	}
+	
+	private void jetStarBookAgentPassenger(AirItinerary itinerary) throws Exception{		
+		String urlAgentPassenger = baseUrl + "AgentPassenger.aspx";
+		Connection.Response resurlGetAgentPassenger = jetStarBook.getProcess(urlAgentPassenger,sessId);
+		URL urlResult = resurlGetAgentPassenger.url();
+		if (!urlResult.toString().equals(urlAgentPassenger))
+			throw new Exception("Get_BookAgentPassenger Exception");	
+		Document document = Jsoup.parse(resurlGetAgentPassenger.body());								
+		ArrayList<String >  list = jetStarBook.getDocumentJsoup((Connection.Response) resurlGetAgentPassenger);
+		viewState = list.get(0);	
+		document = Jsoup.parse(resurlGetAgentPassenger.body());			
+		totalPrice = document.getElementById("total_price").val();	
+		
+		ContactInfo contactInfo = itinerary.getContactInfo();	
+		AgentInfo agentInfo = itinerary.getAgentInfo();			
+		List<AirPassengerInfo> passengerInfos = itinerary.getPassengerInfos();	
+		
+		UpdateFarePriceCommand request = new UpdateFarePriceCommand();
+		ArrayList<AirFareInfo> listAirFareInfo = (ArrayList<AirFareInfo>)itinerary.getFareInfos();
+		List<AirPassengerInfo> listAirPassengerInfo = (List<AirPassengerInfo>)itinerary.getPassengerInfos();
+		request.setOriginDestinationInfos(listAirFareInfo);
+		request.setPassengerInfos(jetStarBook.getAirPassengerTypeQuantity(listAirPassengerInfo));
+		int roundTrip = 1;
+		if (request.getOriginDestinationInfos().size() == 2)
+			roundTrip = 2;
+		Connection.Response resPostAgentPassenger = jetStarBook.postProcess(urlAgentPassenger,jetStarBook.createAgentPassengerParams(request,roundTrip,agentInfo,contactInfo,passengerInfos,totalPrice,viewState),sessId);
+		urlResult = resPostAgentPassenger.url();		
+		if (!urlResult.toString().equals(baseUrl + "AgentPay.aspx"))	{
+			logger.error("jetstarBook: " + "Post_BookAgentPassenger Exception");
+			throw new Exception("Post_BookAgentPassenger Exception");
+		}		
+	}
+	
+	public boolean verifyBook(AirItinerary itinerary) throws Exception{		
+		System.out.println("jetstarBook: function login");
+		jetStarBookLogin();		
+		System.out.println("jetstarBook: function search");
+		jetStarBookSearch(itinerary);		
+		System.out.println("jetstarBook: function AgentSelect");
+		jetStarBookAgentSelect(itinerary);		
+		System.out.println("jetstarBook: function AgentPassenger"); 
+		jetStarBookAgentPassenger(itinerary);
+		String urlAgentPay = baseUrl + "AgentPay.aspx";
+		Connection.Response resurlGetAgentPay = jetStarBook.getProcess(urlAgentPay,sessId);				
+		URL urlResult = resurlGetAgentPay.url();
+		if (!urlResult.toString().equals(urlAgentPay))
+			return false;	
+		return true;
+	}
+	
+	
+	
+	
 	
 	public BookResult jetstarSearchBookId(AirItinerary itinerary) throws Exception{
 		BookResult result = null;
@@ -826,13 +899,13 @@ public class JetstarStub {
 		try { 					
 			jetStarPayLogin();
 			jetStarBookingList(itinerary);	
-			// Begin lock
-			jetStarC3Payment();
-			jetStarC3Wait();
-			return jetStarC3Itinerary();			
-			// End lock
 			
-//			return jetStarC3PaymentTEST(itinerary);
+			// Begin lock
+//			jetStarC3Payment();
+//			jetStarC3Wait();
+//			return jetStarC3Itinerary();			
+			// End lock		
+			return jetStarC3PaymentTEST(itinerary);
 			
 		} catch (Exception ex) {
 			throw ex;

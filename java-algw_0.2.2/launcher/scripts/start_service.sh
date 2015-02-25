@@ -7,5 +7,5 @@ home=`cd "$home">/dev/null; pwd`
 
 classpath=$home:$home/lib/*:$home/bin/*:$home/config/*
 
-java -cp $classpath com.mbv.ticketsystem.launcher.Console
+java -cp $classpath -Dlog4j.configurationFile=log4j.properties com.mbv.ticketsystem.launcher.Console
 
